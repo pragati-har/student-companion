@@ -9,7 +9,7 @@ describe('email content formatting', () => {
       title: 'Lab report',
       description: 'Include the experiment results.',
       subjectId: { name: 'Physics' },
-      deadline: '2026-11-04T10:00:00.000Z',
+      deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       status: 'pending',
     }]);
 
