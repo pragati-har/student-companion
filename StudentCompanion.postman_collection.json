@@ -1,0 +1,320 @@
+{
+  "info": {
+    "name": "Student Companion API",
+    "description": "Full API test collection for Student Companion. Import this into Postman. Set the `base_url` variable to http://localhost:3000 for local testing.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:3000", "type": "string" },
+    { "key": "subject_id", "value": "", "type": "string" },
+    { "key": "assignment_id", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+            "pm.test('success=true', () => pm.expect(pm.response.json().success).to.be.true);",
+            "pm.test('Cookie set', () => pm.expect(pm.cookies.has('sc_token')).to.be.true);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Test Student\",\n  \"email\": \"student@example.com\",\n  \"password\": \"password123\"\n}" },
+            "url": { "raw": "{{base_url}}/api/auth/register", "host": ["{{base_url}}"], "path": ["api","auth","register"] }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('success=true', () => pm.expect(pm.response.json().success).to.be.true);",
+            "pm.test('Cookie set', () => pm.expect(pm.cookies.has('sc_token')).to.be.true);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"student@example.com\",\n  \"password\": \"password123\"\n}" },
+            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api","auth","login"] }
+          }
+        },
+        {
+          "name": "Login — Wrong Password (expect 401)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 401', () => pm.response.to.have.status(401));",
+            "pm.test('success=false', () => pm.expect(pm.response.json().success).to.be.false);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"student@example.com\",\n  \"password\": \"wrongpassword\"\n}" },
+            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api","auth","login"] }
+          }
+        },
+        {
+          "name": "Get Current User",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has email', () => pm.expect(pm.response.json().data.email).to.exist);",
+            "pm.test('No passwordHash', () => pm.expect(pm.response.json().data.passwordHash).to.be.undefined);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/auth/me", "host": ["{{base_url}}"], "path": ["api","auth","me"] }
+          }
+        },
+        {
+          "name": "Protected — No Cookie (expect 401)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 401', () => pm.response.to.have.status(401));",
+            "pm.test('success=false', () => pm.expect(pm.response.json().success).to.be.false);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Cookie", "value": "", "disabled": true }],
+            "url": { "raw": "{{base_url}}/api/subjects", "host": ["{{base_url}}"], "path": ["api","subjects"] }
+          }
+        },
+        {
+          "name": "Logout",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('success=true', () => pm.expect(pm.response.json().success).to.be.true);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{base_url}}/api/auth/logout", "host": ["{{base_url}}"], "path": ["api","auth","logout"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Subjects",
+      "item": [
+        {
+          "name": "Create Subject",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+            "const id = pm.response.json().data._id;",
+            "pm.collectionVariables.set('subject_id', id);",
+            "pm.test('Has _id', () => pm.expect(id).to.exist);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Data Structures\",\n  \"code\": \"CS301\"\n}" },
+            "url": { "raw": "{{base_url}}/api/subjects", "host": ["{{base_url}}"], "path": ["api","subjects"] }
+          }
+        },
+        {
+          "name": "Create Duplicate Subject (expect 409)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 409', () => pm.response.to.have.status(409));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Data Structures\",\n  \"code\": \"CS301\"\n}" },
+            "url": { "raw": "{{base_url}}/api/subjects", "host": ["{{base_url}}"], "path": ["api","subjects"] }
+          }
+        },
+        {
+          "name": "List Subjects (paginated)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has pagination', () => pm.expect(pm.response.json().pagination).to.exist);",
+            "pm.test('Is array', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/subjects?page=1&limit=10", "host": ["{{base_url}}"], "path": ["api","subjects"], "query": [{"key":"page","value":"1"},{"key":"limit","value":"10"}] }
+          }
+        },
+        {
+          "name": "Update Subject",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Name updated', () => pm.expect(pm.response.json().data.name).to.equal('Data Structures Updated'));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Data Structures Updated\",\n  \"code\": \"CS301\"\n}" },
+            "url": { "raw": "{{base_url}}/api/subjects/{{subject_id}}", "host": ["{{base_url}}"], "path": ["api","subjects","{{subject_id}}"] }
+          }
+        },
+        {
+          "name": "Delete Subject",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('success=true', () => pm.expect(pm.response.json().success).to.be.true);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/api/subjects/{{subject_id}}", "host": ["{{base_url}}"], "path": ["api","subjects","{{subject_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Assignments",
+      "item": [
+        {
+          "name": "Create Assignment",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+            "const id = pm.response.json().data._id;",
+            "pm.collectionVariables.set('assignment_id', id);",
+            "pm.test('Has subjectId populated', () => pm.expect(pm.response.json().data.subjectId.name).to.exist);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"subjectId\": \"{{subject_id}}\",\n  \"title\": \"Lab Report 1\",\n  \"description\": \"Write a report on sorting algorithms\",\n  \"deadline\": \"2027-01-15T23:59:00.000Z\",\n  \"remindMe\": true\n}" },
+            "url": { "raw": "{{base_url}}/api/assignments", "host": ["{{base_url}}"], "path": ["api","assignments"] }
+          }
+        },
+        {
+          "name": "List Upcoming Assignments",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has pagination', () => pm.expect(pm.response.json().pagination).to.exist);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/assignments?status=upcoming&page=1&limit=10", "host": ["{{base_url}}"], "path": ["api","assignments"], "query": [{"key":"status","value":"upcoming"},{"key":"page","value":"1"},{"key":"limit","value":"10"}] }
+          }
+        },
+        {
+          "name": "List Overdue Assignments",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/assignments?status=overdue", "host": ["{{base_url}}"], "path": ["api","assignments"], "query": [{"key":"status","value":"overdue"}] }
+          }
+        },
+        {
+          "name": "Toggle Reminder ON",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('remindMe=true', () => pm.expect(pm.response.json().data.remindMe).to.be.true);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{ \"remindMe\": true }" },
+            "url": { "raw": "{{base_url}}/api/assignments/{{assignment_id}}/remind", "host": ["{{base_url}}"], "path": ["api","assignments","{{assignment_id}}","remind"] }
+          }
+        },
+        {
+          "name": "Toggle Reminder OFF",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('remindMe=false', () => pm.expect(pm.response.json().data.remindMe).to.be.false);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{ \"remindMe\": false }" },
+            "url": { "raw": "{{base_url}}/api/assignments/{{assignment_id}}/remind", "host": ["{{base_url}}"], "path": ["api","assignments","{{assignment_id}}","remind"] }
+          }
+        },
+        {
+          "name": "Mark Assignment Complete",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('status=completed', () => pm.expect(pm.response.json().data.status).to.equal('completed'));",
+            "pm.test('remindMe disabled', () => pm.expect(pm.response.json().data.remindMe).to.be.false);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{base_url}}/api/assignments/{{assignment_id}}/complete", "host": ["{{base_url}}"], "path": ["api","assignments","{{assignment_id}}","complete"] }
+          }
+        },
+        {
+          "name": "Delete Assignment",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{base_url}}/api/assignments/{{assignment_id}}", "host": ["{{base_url}}"], "path": ["api","assignments","{{assignment_id}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Attendance",
+      "item": [
+        {
+          "name": "Mark Present",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('status=present', () => pm.expect(pm.response.json().data.status).to.equal('present'));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"subjectId\": \"{{subject_id}}\",\n  \"date\": \"2026-10-29\",\n  \"status\": \"present\"\n}" },
+            "url": { "raw": "{{base_url}}/api/attendance", "host": ["{{base_url}}"], "path": ["api","attendance"] }
+          }
+        },
+        {
+          "name": "Correct to Absent (same date — upsert)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('status=absent (corrected)', () => pm.expect(pm.response.json().data.status).to.equal('absent'));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"subjectId\": \"{{subject_id}}\",\n  \"date\": \"2026-10-29\",\n  \"status\": \"absent\"\n}" },
+            "url": { "raw": "{{base_url}}/api/attendance", "host": ["{{base_url}}"], "path": ["api","attendance"] }
+          }
+        },
+        {
+          "name": "Get Attendance Summary",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has overallPercent', () => pm.expect(pm.response.json().data.overallPercent).to.be.a('number'));",
+            "pm.test('Has subjects array', () => pm.expect(pm.response.json().data.subjects).to.be.an('array'));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/attendance/summary", "host": ["{{base_url}}"], "path": ["api","attendance","summary"] }
+          }
+        },
+        {
+          "name": "List Attendance (paginated)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has pagination', () => pm.expect(pm.response.json().pagination).to.exist);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/attendance?page=1&limit=20", "host": ["{{base_url}}"], "path": ["api","attendance"], "query": [{"key":"page","value":"1"},{"key":"limit","value":"20"}] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Rate Limit Test",
+      "item": [
+        {
+          "name": "Hammer Login (run 11 times — 11th should 429)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const code = pm.response.code;",
+            "pm.test('200 or 401 or 429', () => pm.expect([200,401,429]).to.include(code));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"wrong@example.com\",\n  \"password\": \"wrong\"\n}" },
+            "url": { "raw": "{{base_url}}/api/auth/login", "host": ["{{base_url}}"], "path": ["api","auth","login"] }
+          }
+        }
+      ]
+    }
+  ]
+}
