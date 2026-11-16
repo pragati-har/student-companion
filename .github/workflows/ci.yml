@@ -44,3 +44,9 @@ jobs:
           NEXT_PUBLIC_APP_URL: http://localhost:3000
           NEXT_PUBLIC_SOCKET_URL: http://localhost:4000
           NODE_ENV: production
+
+      - name: Build Next.js Docker target
+        run: docker build --target nextjs --build-arg NEXT_PUBLIC_SOCKET_URL=http://localhost:4000 --tag student-companion-nextjs:ci .
+
+      - name: Build Socket.IO Docker target
+        run: docker build --target socketserver --tag student-companion-socketserver:ci .

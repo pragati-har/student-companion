@@ -9,15 +9,18 @@ RUN npm ci --omit=dev
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-COPY --from=deps /app/node_modules ./node_modules
+COPY package.json package-lock.json ./
+RUN npm ci
+
 COPY . .
 
 # Build-time stubs (real values injected at runtime via env)
+ARG NEXT_PUBLIC_SOCKET_URL=http://localhost:4000
 ENV MONGODB_URI=placeholder \
     JWT_SECRET=placeholder \
     JWT_EXPIRES_IN=7d \
     NEXT_PUBLIC_APP_URL=http://localhost:3000 \
-    NEXT_PUBLIC_SOCKET_URL=http://localhost:4000 \
+    NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL} \
     NODE_ENV=production
 
 RUN npm run build
